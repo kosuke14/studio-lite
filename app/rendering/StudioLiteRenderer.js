@@ -470,7 +470,7 @@ export class StudioLiteRenderer {
         // Detect format: check first bytes for XML signature
         const header = new Uint8Array(ab, 0, Math.min(16, ab.byteLength));
         const headerStr = String.fromCharCode(...header);
-        const isXml = headerStr.includes("<?xml") || headerStr.includes("<roblox");
+        const isXml = headerStr.startsWith("<?xml") || headerStr.startsWith("<roblox ");
         if (isXml) {
             console.log("Detected XML format (RBXLX/RBXMX)");
             try {
