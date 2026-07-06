@@ -248,7 +248,7 @@ export class StudioLiteRenderer {
         let scale = {x: 1, y: 1, z: 1};
 
         // Look for mesh data
-        const mesh = findByClassName(part.Children, "SpecialMesh");
+        let mesh = findByClassName(part.Children, "SpecialMesh");
         if (typeof mesh !== "object" && part.ClassName === "MeshPart") mesh = part;
 
         // Decide part color
@@ -489,7 +489,9 @@ export class StudioLiteRenderer {
             const cameraFrame = robloxCamera.CFrame || robloxCamera.CoordinateFrame;
             this.zoomTo(cameraFrame);
         } catch (ignored) {
-            this.conf.sharedFunctions.print("Could not determine camera position!");
+            this.conf.sharedFunctions.print("Could not determine camera position! Setting default view.");
+            this.camera.position.set(50, 50, 50);
+            this.camera.lookAt(0, 0, 0);
         }
         this.queueOperation(async () => {
             try {
