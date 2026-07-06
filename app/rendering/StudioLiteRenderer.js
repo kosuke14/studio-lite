@@ -25,6 +25,7 @@ import {
     Vector2
 } from '../thirdparty/three/three.core.js';
 import { decode } from "../thirdparty/rbxBinaryParser.js";
+import { parseRbxXml } from "../datamodel/rbxXmlParser.js";
 import FlyCamera from '../controls/FlyCamera.js';
 import { WebGLRenderer } from '../thirdparty/three/three.module.js';
 import {
@@ -466,7 +467,16 @@ export class StudioLiteRenderer {
     }
 
     async loadPlace(ab) {
-        this.data = decode(ab);
+        // Detect format: check first bytes for XML signature
+        const header = new Uint8Array(ab, 0, Math.min(16, ab.byteLength));
+        const headerStr = String.fromCharCode(...header);
+        const isXml = headerStr.includes("<?xml") || headerStr.includes("<roblox");
+        if (isXml) {
+            console.log("Detected XML format (RBXLX/RBXMX)");
+            this.data = parseRbxXml(ab);
+        } else {
+            this.data = decode(ab);
+        }
         const workspace = findByClassName(this.data, "Workspace");
         if (workspace) this.noWorkspace = false; else this.noWorkspace = true;
         try {

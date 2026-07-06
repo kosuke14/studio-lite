@@ -29,7 +29,7 @@ Studio Lite is not affiliated with, or endorsed by Roblox Corporation.
 ![Script viewer](images/script.png)
 ![THREE.js Scene Explorer](images/three.png)
 
-These file types can be opened by Studio Lite. Keep in mind that there is no support for files in the XML format (though it is a high priority), so you'll encounter issues especially with older places (which often have RBXL extension but contain XML data).
+These file types can be opened by Studio Lite, including both binary (RBXL/RBXM) and XML (RBXLX/RBXMX) formats.
 
 You can use the Explorer and Properties views to browse the contents of the DataModel. You can click on scripts to view their code. Parts selected in the Explorer are highlighted in the renderer, and you can also zoom to the currently selected part.
 
@@ -106,7 +106,7 @@ You could put a placeholder image in its place, to silence the Missing assets er
 - - [ ] Issues with mesh Scale and Offset (see comments in `StudioLiteRenderer.renderPart`, around where it says `// Give meshes special treatment`)
 - - [ ] Upside down decals (see paintings in suburban house and piano in western lounge)
 - - [ ] Merry-go-round in Suburban playground is broken (base renders sideways)
-- [ ] Support XML format
+- [x] Support XML format
 - [ ] Support all primitive shapes
 - - [x] Block
 - - [x] Ball
