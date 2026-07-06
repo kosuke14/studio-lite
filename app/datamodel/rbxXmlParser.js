@@ -289,6 +289,19 @@ function parseProperties(propsEl) {
             props[propName] = child.textContent.trim();
         }
     }
+
+    // BrickColor in XML is <int name="BrickColor">194</int>, but the
+    // renderer expects {Name, Color: {R, G, B}}. Convert if needed.
+    if (typeof props.BrickColor === "number") {
+        const id = props.BrickColor;
+        const def = brickColors[id];
+        if (def && typeof def === "object") {
+            props.BrickColor = def;
+        } else {
+            props.BrickColor = { Name: "Medium stone grey", Color: { R: 163, G: 162, B: 165 } };
+        }
+    }
+
     return props;
 }
 

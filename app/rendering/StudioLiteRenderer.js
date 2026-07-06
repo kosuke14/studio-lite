@@ -473,7 +473,12 @@ export class StudioLiteRenderer {
         const isXml = headerStr.includes("<?xml") || headerStr.includes("<roblox");
         if (isXml) {
             console.log("Detected XML format (RBXLX/RBXMX)");
-            this.data = parseRbxXml(ab);
+            try {
+                this.data = parseRbxXml(ab);
+            } catch (e) {
+                console.error("XML parse error:", e);
+                throw e;
+            }
         } else {
             this.data = decode(ab);
         }
