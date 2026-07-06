@@ -188,8 +188,9 @@ async function start() {
 	statusLastText = status.innerText;
 	try {
 		await renderer.loadPlace(window.data);
-	} catch (ignored) {
+	} catch (e) {
 		print('The file could not be read. Please reload.');
+		console.error("loadPlace error:", e);
 		barError();
 		throw new Error("The file could not be read. Please reload.");
 	}
