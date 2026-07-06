@@ -190,7 +190,7 @@ async function start() {
 		await renderer.loadPlace(window.data);
 	} catch (e) {
 		print('The file could not be read. Please reload.');
-		console.error("loadPlace error:", e);
+		console.error("loadPlace error:", e && e.message, e && e.stack);
 		barError();
 		throw new Error("The file could not be read. Please reload.");
 	}

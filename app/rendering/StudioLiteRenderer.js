@@ -476,37 +476,53 @@ export class StudioLiteRenderer {
             try {
                 this.data = parseRbxXml(ab);
             } catch (e) {
-                console.error("XML parse error:", e);
+                console.error("[Step 1] XML parse error:", e.message, e.stack);
                 throw e;
             }
         } else {
             this.data = decode(ab);
         }
+        console.log("[Step 2] Parsed, root items:", this.data.length);
         const workspace = findByClassName(this.data, "Workspace");
         if (workspace) this.noWorkspace = false; else this.noWorkspace = true;
         try {
-            const robloxCamera = findByClassName((this.noWorkspace ? findByClassName(this.data, "Model") : workspace).Children, "Camera");
-            const cameraFrame = robloxCamera.CFrame || robloxCamera.CoordinateFrame;
-            this.zoomTo(cameraFrame);
-        } catch (ignored) {
-            this.conf.sharedFunctions.print("Could not determine camera position! Setting default view.");
+            const container = this.noWorkspace ? findByClassName(this.data, "Model") : workspace;
+            if (container && container.Children) {
+                const robloxCamera = findByClassName(container.Children, "Camera");
+                if (robloxCamera) {
+                    const cameraFrame = robloxCamera.CFrame || robloxCamera.CoordinateFrame;
+                    if (cameraFrame) this.zoomTo(cameraFrame);
+                } else {
+                    this.conf.sharedFunctions.print("No Camera found, using default view.");
+                    this.camera.position.set(50, 50, 50);
+                    this.camera.lookAt(0, 0, 0);
+                }
+            } else {
+                this.conf.sharedFunctions.print("No Workspace/Model container, using default view.");
+                this.camera.position.set(50, 50, 50);
+                this.camera.lookAt(0, 0, 0);
+            }
+        } catch (e) {
+            console.error("[Step 3] Camera setup error:", e.message);
             this.camera.position.set(50, 50, 50);
             this.camera.lookAt(0, 0, 0);
         }
         this.queueOperation(async () => {
             try {
-                const sky = findByClassName(findByClassName(this.data, "Lighting").Children, "Sky");
-                if (!sky) throw new Error();
-                try {
-                    for (const key of ["Bk", "Dn", "Ft", "Lf", "Rt", "Up"]) {
-                        if (await tryToFetch(await this.mAssetManager.parseAssetPath(sky["Skybox" + key]))) {} else { throw new Error(); }
+                const lighting = findByClassName(this.data, "Lighting");
+                if (lighting && lighting.Children) {
+                    const sky = findByClassName(lighting.Children, "Sky");
+                    if (sky) {
+                        for (const key of ["Bk", "Dn", "Ft", "Lf", "Rt", "Up"]) {
+                            if (await tryToFetch(await this.mAssetManager.parseAssetPath(sky["Skybox" + key]))) {} else { throw new Error(); }
+                        }
+                        await this.setSkybox(sky);
                     }
-                    await this.setSkybox(sky);
-                } catch (ignored) {
-                    this.conf.sharedFunctions.print("Could not load sky!");
                 }
             } catch (ignored) {};
         });
+        console.log("[Step 4] Starting traverse...");
         await this.traverse({"Children": this.data}, this.conf.sharedObjects.jsTreeData);
+        console.log("[Step 5] Traverse done");
     }
 }
