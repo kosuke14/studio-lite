@@ -330,12 +330,10 @@ function parseProperties(propsEl) {
 
     // Normalize property names: Roblox XML sometimes uses lowercase names
     // that the renderer expects in PascalCase.
-    if (props.size && !props.Size) {
-        props.Size = props.size;
-    }
-    if (props.shape && !props.Shape) {
-        props.Shape = props.shape;
-    }
+    if (props.size && !props.Size) props.Size = props.size;
+    if (props.shape && !props.Shape) props.Shape = props.shape;
+    if (props.offset && !props.Offset) props.Offset = props.offset;
+    if (props.scale && !props.Scale) props.Scale = props.scale;
 
     // Map token enum values to string names for properties the renderer checks.
     // Shape: 1=Block, 2=Ball, 3=Cylinder

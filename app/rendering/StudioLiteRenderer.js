@@ -271,9 +271,9 @@ export class StudioLiteRenderer {
             // to see what I mean, uncomment X and Z, then open City.rbxl from the examples.
             // Look at the stop signs. whaat? I ain't figuring this one out.
             offset = {
-                x: 0,//blockMesh.Offset.X,
-                y: blockMesh.Offset.Y,
-                z: 0,//blockMesh.Offset.Z
+                x: 0,
+                y: blockMesh.Offset ? blockMesh.Offset.Y : 0,
+                z: 0,
             };
         }
         
