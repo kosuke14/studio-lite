@@ -155,8 +155,11 @@ function parseRect(el) {
 }
 
 function parseNumberRange(el) {
-    const min = getTagFloat(el, "min");
-    const max = getTagFloat(el, "max");
+    // Format: "2.5 2.9" (space-separated)
+    const text = el.textContent.trim();
+    const parts = text.split(/\s+/);
+    const min = parseFloat(parts[0]) || 0;
+    const max = parts.length > 1 ? (parseFloat(parts[1]) || 0) : min;
     return { Min: min, Max: max };
 }
 
@@ -170,36 +173,70 @@ function parsePhysicalProperties(el) {
 }
 
 function parseNumberSequence(el) {
-    const keypoints = [];
+    // Two formats:
+    // 1) <Keypoint time="0" value="0.5" envelope="0"/> children
+    // 2) "0 0.5 0 0.5 0.5 0" space-separated text (Time Value Envelope triplets)
     const kpEls = el.children;
-    for (let i = 0; i < kpEls.length; i++) {
-        const kp = kpEls[i];
-        if (kp.tagName === "Keypoint") {
-            keypoints.push({
-                Time: parseFloat(kp.getAttribute("time")) || 0,
-                Value: parseFloat(kp.getAttribute("value")) || 0,
-                Envelope: parseFloat(kp.getAttribute("envelope")) || 0
-            });
+    if (kpEls.length > 0) {
+        const keypoints = [];
+        for (let i = 0; i < kpEls.length; i++) {
+            const kp = kpEls[i];
+            if (kp.tagName === "Keypoint") {
+                keypoints.push({
+                    Time: parseFloat(kp.getAttribute("time")) || 0,
+                    Value: parseFloat(kp.getAttribute("value")) || 0,
+                    Envelope: parseFloat(kp.getAttribute("envelope")) || 0
+                });
+            }
         }
+        return { Keypoints: keypoints };
+    }
+    // Space-separated: "time value envelope time value envelope ..."
+    const text = el.textContent.trim();
+    const nums = text.split(/\s+/).map(Number);
+    const keypoints = [];
+    for (let i = 0; i + 2 < nums.length; i += 3) {
+        keypoints.push({
+            Time: nums[i] || 0,
+            Value: nums[i + 1] || 0,
+            Envelope: nums[i + 2] || 0
+        });
     }
     return { Keypoints: keypoints };
 }
 
 function parseColorSequence(el) {
-    const keypoints = [];
+    // Two formats:
+    // 1) <Keypoint time="0" r="1" g="0" b="0" envelope="0"/> children
+    // 2) "0 1 0 0 1 0 0 1 0 0.5 0 1 0 0.5 0" space-separated (Time R G B Envelope triplets)
     const kpEls = el.children;
-    for (let i = 0; i < kpEls.length; i++) {
-        const kp = kpEls[i];
-        if (kp.tagName === "Keypoint") {
-            const r = parseFloat(kp.getAttribute("r")) || 0;
-            const g = parseFloat(kp.getAttribute("g")) || 0;
-            const b = parseFloat(kp.getAttribute("b")) || 0;
-            keypoints.push({
-                Time: parseFloat(kp.getAttribute("time")) || 0,
-                Color: { R: r, G: g, B: b },
-                Envelope: parseFloat(kp.getAttribute("envelope")) || 0
-            });
+    if (kpEls.length > 0) {
+        const keypoints = [];
+        for (let i = 0; i < kpEls.length; i++) {
+            const kp = kpEls[i];
+            if (kp.tagName === "Keypoint") {
+                const r = parseFloat(kp.getAttribute("r")) || 0;
+                const g = parseFloat(kp.getAttribute("g")) || 0;
+                const b = parseFloat(kp.getAttribute("b")) || 0;
+                keypoints.push({
+                    Time: parseFloat(kp.getAttribute("time")) || 0,
+                    Color: { R: r, G: g, B: b },
+                    Envelope: parseFloat(kp.getAttribute("envelope")) || 0
+                });
+            }
         }
+        return { Keypoints: keypoints };
+    }
+    // Space-separated: "time r g b envelope time r g b envelope ..."
+    const text = el.textContent.trim();
+    const nums = text.split(/\s+/).map(Number);
+    const keypoints = [];
+    for (let i = 0; i + 4 < nums.length; i += 5) {
+        keypoints.push({
+            Time: nums[i] || 0,
+            Color: { R: nums[i+1] || 0, G: nums[i+2] || 0, B: nums[i+3] || 0 },
+            Envelope: nums[i+4] || 0
+        });
     }
     return { Keypoints: keypoints };
 }
@@ -239,6 +276,7 @@ const valueParsers = {
     "Content": (el) => parseContent(el),
     "ContentId": (el) => parseContent(el),
     "Enum": (el) => parseInt(el.textContent.trim(), 10) || 0,
+    "token": (el) => parseInt(el.textContent.trim(), 10) || 0,
     "BrickColor": (el) => parseBrickColor(el),
     "UDim": (el) => parseUDim(el),
     "UDim2": (el) => parseUDim2(el),
@@ -288,6 +326,28 @@ function parseProperties(propsEl) {
             // Unknown type: store as string
             props[propName] = child.textContent.trim();
         }
+    }
+
+    // Normalize property names: Roblox XML sometimes uses lowercase names
+    // that the renderer expects in PascalCase.
+    if (props.size && !props.Size) {
+        props.Size = props.size;
+    }
+    if (props.shape && !props.Shape) {
+        props.Shape = props.shape;
+    }
+
+    // Map token enum values to string names for properties the renderer checks.
+    // Shape: 1=Block, 2=Ball, 3=Cylinder
+    const shapeNames = { 1: "Block", 2: "Ball", 3: "Cylinder" };
+    if (typeof props.Shape === "number") {
+        props.Shape = shapeNames[props.Shape] || "Block";
+    }
+
+    // Color3uint8 in XML serves the same role as Color3.
+    // The renderer reads part.Color3, so map it.
+    if (props.Color3uint8 && !props.Color3) {
+        props.Color3 = props.Color3uint8;
     }
 
     // BrickColor in XML is <int name="BrickColor">194</int>, but the
