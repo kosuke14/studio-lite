@@ -261,15 +261,12 @@ export class StudioLiteRenderer {
 
         // Give meshes special treatment
         const blockMesh = mesh && mesh !== part ? mesh : findByClassName(part.Children, "BlockMesh");
-        if (blockMesh) {
+        if (blockMesh && blockMesh.Scale) {
             scale = {
                 x: blockMesh.Scale.X,
                 y: blockMesh.Scale.Y,
                 z: blockMesh.Scale.Z
             };
-            // offset stays y-only for now. offset coordinates are somehow relative to rotation? tf??
-            // to see what I mean, uncomment X and Z, then open City.rbxl from the examples.
-            // Look at the stop signs. whaat? I ain't figuring this one out.
             offset = {
                 x: 0,
                 y: blockMesh.Offset ? blockMesh.Offset.Y : 0,
@@ -278,6 +275,9 @@ export class StudioLiteRenderer {
         }
         
         // If ball or cylinder, decide geometry
+        // Ensure Size exists with defaults
+        if (!part.Size) part.Size = { X: 1, Y: 1, Z: 1 };
+
         if (part.Shape == "Ball") {
             geometry = new SphereGeometry(part.Size.X / 2, 10, 10)
         } else if (part.Shape === "Cylinder" || (mesh && mesh.MeshType === "Head")) {
